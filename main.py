@@ -8,20 +8,20 @@ parser = Lark('''%import common.NUMBER
                  %import common.ESCAPED_STRING
                  %import common.CNAME
                  %import common.WS
-                 ?pipe: expression "|" pipe
-                     |  expression "|" expression
+                 ?pipe: expression "|" pipe        -> pipe
+                     |  expression "|" expression  -> pipe
                  ?expression: constant
                      | "$"                         -> element_root
                      | "."                         -> element
                      | "." key                     -> element_at_key
                      | "[" key "]"                 -> element_at_index
                      | expression "=" expression   -> set
-                     | expression "+" expression   -> math_add
-                     | expression "-" expression   -> math_subtract
                      | expression "*" expression   -> math_multiply
                      | expression "/" expression   -> math_divide
-                     | expression "%" expression   -> math_modulo
                      | expression "^" expression   -> math_power
+                     | expression "%" expression   -> math_modulo
+                     | expression "+" expression   -> math_add
+                     | expression "-" expression   -> math_subtract
                  ?key: CNAME
                      | ESCAPED_STRING
                  ?constant: NUMBER                 -> number
@@ -35,9 +35,4 @@ print(parser.parse('$'
                    '| .a'
                    '| [a]'
                    '| .a = 1'
-                   '| 1 + 1'
-                   '| 1 - 1'
-                   '| 1 * 1'
-                   '| 1 / 1'
-                   '| 1 % 1'
-                   '| 1 ^ 1').pretty())
+                   '| 1 + 1 - 1 * 1 / 1 % 1 ^ 1').pretty())
