@@ -16,7 +16,10 @@ parser = Lark('''%import common.NUMBER
                      | assignment
                      | reference
                      | constant
+                     | call
                  
+                 ?call: key "(" expression ( "," expression )* ")"   -> call
+
                  ?assignment: reference "=" expression               -> assignment
 
                  ?math_prio3: math_prio3 /\\+|-/ math_prio2          -> math
@@ -63,3 +66,4 @@ demo('"abcdefg"')
 demo('true')
 demo('false')
 demo('1 + 2 - 3 * 4 / 5 % 6 ^ 7')
+demo('target(1 + 2, 3, 4 + 5)')
