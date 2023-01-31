@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from lark import Lark
+import ruamel.yaml
+import sys
 
 parser = Lark('''%import common.NUMBER
                  %import common.SIGNED_NUMBER
@@ -128,7 +130,7 @@ def interpret_subreference_field(value, context):
 
 def interpret_subreference_array_element(value, context):
     index = int(value.children[0])
-    if index <= len(context):
+    if index >= len(context):
         context[index] = {}
     return context[index]
 
@@ -172,18 +174,30 @@ mapping['boolean_true'] = interpret_boolean_true
 mapping['boolean_false'] = interpret_boolean_false
 mapping['null'] = interpret_null
 
+yaml = ruamel.yaml.YAML()
+yaml.preserve_quotes = True
+
 
 def demo(expression):
     print("expression: " + expression)
     parsed = parser.parse(expression)
     if parsed.data in mapping:
         interpreted = mapping[parsed.data](parsed)
+        # if interpreted is a ruamel yaml class, dump it
+        if isinstance(interpreted, ruamel.yaml.comments.CommentedBase):
+            print("yaml:")
+            yaml.dump(interpreted, sys.stdout)
         print("interpreted: " + str(interpreted))
         print()
     else:
         print(parsed.pretty())
 
 
+with open("sample.yml", 'r') as f:
+    context_process = yaml.load(f)
+    context_pipe = context_process
+
+demo('.a.b.c[0]')
 demo('.a.b.c[0] = 123')
 demo('.a | .b | .c | [0]')
 demo('"abcdefg"')
