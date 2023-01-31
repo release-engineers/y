@@ -27,7 +27,7 @@ parser = Lark('''%import common.NUMBER
                  ?math_prio2: math_prio2 /\\/|\\*|%/ math_prio1      -> math
                       | math_prio1
                  ?math_prio1: constant /\\^/ math_prio1              -> math
-                     | constant
+                     | constant                                      -> constant
                      | reference
 
                  ?constant: NUMBER                                   -> number
@@ -57,7 +57,24 @@ parser = Lark('''%import common.NUMBER
 def demo(expression):
     print(expression)
     parsed = parser.parse(expression)
+    if parsed.data == 'constant':
+        print("interpreted: " + str(interpret_constant(parsed.children[0])))
     print(parsed.pretty())
+
+
+def interpret_constant(parsed):
+    if parsed.data == 'number':
+        return float(parsed.children[0])
+    elif parsed.data == 'string':
+        return parsed.children[0][1:-1]
+    elif parsed.data == 'boolean_true':
+        return True
+    elif parsed.data == 'boolean_false':
+        return False
+    elif parsed.data == 'null':
+        return None
+    else:
+        raise Exception('Unknown constant type: ' + parsed.data)
 
 
 demo('.a.b.c[0] = 123')
