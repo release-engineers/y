@@ -9,8 +9,10 @@ parser = Lark('''%import common.NUMBER
                  %import common.CNAME
                  %import common.WS
                  ?expression: constant
-                     | "." key                     -> element_by_key
-                     | "[" key "]"                 -> element_by_key
+                     | "$"                         -> element_root
+                     | "."                         -> element
+                     | "." key                     -> element_at_key
+                     | "[" key "]"                 -> element_at_index
                      | expression "|" expression   -> pipe
                      | expression "=" expression   -> set
                      | expression "+" expression   -> math_add
@@ -21,11 +23,20 @@ parser = Lark('''%import common.NUMBER
                      | expression "^" expression   -> math_power
                  ?key: CNAME
                      | ESCAPED_STRING
-                 ?constant: NUMBER
-                      | ESCAPED_STRING
-                      | SIGNED_NUMBER
+                 ?constant: NUMBER                 -> number
+                      | ESCAPED_STRING             -> string
+                      | SIGNED_NUMBER              -> number
                  %ignore WS
          ''', start='expression')
 
-res = parser.parse('2 + 3 - 4').pretty()
-print(res)
+print(parser.parse('$'
+                   '| .'
+                   '| .a'
+                   '| [a]'
+                   '| .a = 1'
+                   '| 1 + 1'
+                   '| 1 - 1'
+                   '| 1 * 1'
+                   '| 1 / 1'
+                   '| 1 % 1'
+                   '| 1 ^ 1').pretty())
