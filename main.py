@@ -19,11 +19,11 @@ parser = Lark('''%import common.NUMBER
                  
                  ?assignment: reference "=" expression               -> assignment
 
-                 ?math_prio3: math_prio3 /\\+|-/ math_prio2          -> math_prio3
+                 ?math_prio3: math_prio3 /\\+|-/ math_prio2          -> math
                       | math_prio2
-                 ?math_prio2: math_prio2 /\\/|\\*|%/ math_prio1      -> math_prio2
+                 ?math_prio2: math_prio2 /\\/|\\*|%/ math_prio1      -> math
                       | math_prio1
-                 ?math_prio1: constant /\\^/ math_prio1              -> math_prio1
+                 ?math_prio1: constant /\\^/ math_prio1              -> math
                      | constant
                      | reference
 
