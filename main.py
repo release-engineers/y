@@ -9,7 +9,7 @@ parser = Lark('''%import common.NUMBER
                  %import common.CNAME
                  %import common.WS
 
-                 ?pipe: expression "|" pipe                        -> pipe
+                 ?pipe: expression "|" pipe                          -> pipe
                      | expression
 
                  ?expression: math_prio3
@@ -17,36 +17,38 @@ parser = Lark('''%import common.NUMBER
                      | reference
                      | constant
                  
-                 ?assignment: reference "=" expression            -> assignment
+                 ?assignment: reference "=" expression               -> assignment
 
-                 ?math_prio3: math_prio3 ("+"|"-") math_prio2     -> math_prio3
+                 ?math_prio3: math_prio3 /\\+|-/ math_prio2          -> math_prio3
                       | math_prio2
-                 ?math_prio2: math_prio2 ("/"|"*"|"%") math_prio1 -> math_prio2
+                 ?math_prio2: math_prio2 /\\/|\\*|%/ math_prio1    -> math_prio2
                       | math_prio1
-                 ?math_prio1: constant "^" math_prio1             -> math_prio1
+                 ?math_prio1: constant /\\^/ math_prio1                -> math_prio1
                      | constant
                      | reference
 
-                 ?constant: NUMBER                 -> number
-                      | SIGNED_NUMBER              -> number
-                      | ESCAPED_STRING             -> string
-                      | "true"                     -> boolean_true
-                      | "false"                    -> boolean_false
-                      | "null"                     -> null
+                 ?constant: NUMBER                                   -> number
+                      | SIGNED_NUMBER                                -> number
+                      | ESCAPED_STRING                               -> string
+                      | "true"                                       -> boolean_true
+                      | "false"                                      -> boolean_false
+                      | "null"                                       -> null
 
-                 ?reference: "$"            -> reference_root
-                     | "$" subreference      -> reference_root_subreference
-                     | subreference          -> reference_contextual_subreference
+                 ?reference: "$"                                     -> reference_root
+                     | "$" subreference                              -> reference_root_with_subreference
+                     | "."                                           -> reference_contextual
+                     | subreference                                  -> reference_contextual_with_subreference
 
-                 ?subreference: subreference accessor        -> subreference
-                        | accessor
+                 ?subreference: "." key                              -> field
+                    | "[" index "]"                                  -> array_element
+                    | "["  "]"                                       -> array
+                    | "." key subreference                           -> field_with_subreference
+                    | "[" index "]" subreference                     -> array_element_with_subreference
+                    | "["  "]" subreference                          -> array_with_subreference
 
-                 ?accessor: "." key                -> accessor_field_by_key
-                    | "[" index "]"                -> accessor_element_by_index
-                    | "["  "]"                     -> accessor_elements
-                 ?index: NUMBER                    -> index
+                 ?index: NUMBER                                      -> index
 
-                 ?key: CNAME                       -> key
+                 ?key: CNAME                                         -> key
                      | ESCAPED_STRING
 
                  %ignore WS
