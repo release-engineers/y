@@ -39,11 +39,11 @@ parser = Lark('''%import common.NUMBER
 
                  ?reference: "$" subreference*                       -> reference_root
                      | "."                                           -> reference_context
-                     | subreference+                                 -> reference_context_subreference
+                     | subreference+                                 -> reference_context
 
-                 ?subreference: "." key                              -> reference_field
-                    | "[" index "]"                                  -> reference_array_element
-                    | "["  "]"                                       -> reference_array
+                 ?subreference: "." key                              -> subreference_field
+                    | "[" index "]"                                  -> subreference_array_element
+                    | "["  "]"                                       -> subreference_array
 
                  ?index: NUMBER
 
@@ -53,6 +53,60 @@ parser = Lark('''%import common.NUMBER
                  %ignore WS
          ''', start='pipe', propagate_positions=True)
 
+context_process = {}
+context_pipe = context_process
+mapping = {}
+
+
+# -- pipe
+
+def interpret_pipe(value):
+    global context_pipe
+    original_context_pipe = context_pipe
+    for expression in value.children:
+        expression_interpreter = mapping[expression.data]
+        result = expression_interpreter(expression)
+        context_pipe = result
+    context_pipe = original_context_pipe
+
+
+# -- references
+
+def interpret_reference_root(value):
+    result = context_process
+    for subreference in value.children:
+        subreference_interpreter = mapping[subreference.data]
+        result = subreference_interpreter(subreference, result)
+    return result
+
+
+def interpret_reference_context(value):
+    result = context_pipe
+    for subreference in value.children:
+        subreference_interpreter = mapping[subreference.data]
+        result = subreference_interpreter(subreference, result)
+    return result
+
+
+def interpret_subreference_field(value, context):
+    field = value.children[0]
+    if field not in context:
+        context[field] = {}
+    return context[field]
+
+
+def interpret_subreference_array_element(value, context):
+    index = int(value.children[0])
+    if index <= len(context):
+        context[index] = {}
+    return context[index]
+
+
+def interpret_subreference_array(value, context):
+    return context
+
+
+# -- constants
 
 def interpret_number(value):
     return float(value.children[0])
@@ -74,31 +128,26 @@ def interpret_null(value):
     return None
 
 
-mapping = {
-    'number': interpret_number,
-    'string': interpret_string,
-    'boolean_true': interpret_boolean_true,
-    'boolean_false': interpret_boolean_false,
-    'null': interpret_null,
-}
-
-
-def interpret_any(value):
-    if value.data in mapping:
-        return mapping[value.data](value)
-    else:
-        raise Exception("Unknown value type: " + value.data)
+mapping['pipe'] = interpret_pipe
+mapping['reference_root'] = interpret_reference_root
+mapping['reference_context'] = interpret_reference_context
+mapping['subreference_field'] = interpret_subreference_field
+mapping['subreference_array_element'] = interpret_subreference_array_element
+mapping['subreference_array'] = interpret_subreference_array
+mapping['number'] = interpret_number
+mapping['string'] = interpret_string
+mapping['boolean_true'] = interpret_boolean_true
+mapping['boolean_false'] = interpret_boolean_false
+mapping['null'] = interpret_null
 
 
 def demo(expression):
     print("expression: " + expression)
     parsed = parser.parse(expression)
-    try:
-        interpreted = interpret_any(parsed)
+    if parsed.data in mapping:
+        interpreted = mapping[parsed.data](parsed)
         print("interpreted: " + str(interpreted))
-        print()
-    except Exception:
-        print(parsed.pretty())
+    print(parsed.pretty())
 
 
 demo('.a.b.c[0] = 123')
