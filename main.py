@@ -9,12 +9,15 @@ parser = Lark('''%import common.NUMBER
                  %import common.CNAME
                  %import common.WS
 
-                 ?pipe: expression "|" pipe        -> pipe
-                     |  expression "|" expression  -> pipe
+                 ?pipe: expression "|" pipe                        -> pipe
+                     | expression
 
                  ?expression: math_prio3
+                     | assignment
                      | reference
                      | constant
+                 
+                 ?assignment: reference "=" expression            -> assignment
 
                  ?math_prio3: math_prio3 ("+"|"-") math_prio2     -> math_prio3
                       | math_prio2
@@ -29,12 +32,18 @@ parser = Lark('''%import common.NUMBER
                       | ESCAPED_STRING             -> string
                       | "true"                     -> boolean_true
                       | "false"                    -> boolean_false
+                      | "null"                     -> null
 
-                 ?reference: "$"                   -> context_root
-                     | "."                         -> context
-                     | "." key                     -> context_child_by_key
-                     | "[" index "]"               -> context_child_by_index
-                 
+                 ?reference: "$"            -> reference_root
+                     | "$" subreference      -> reference_root_subreference
+                     | subreference          -> reference_contextual_subreference
+
+                 ?subreference: subreference accessor        -> subreference
+                        | accessor
+
+                 ?accessor: "." key                -> accessor_field_by_key
+                    | "[" index "]"                -> accessor_element_by_index
+                    | "["  "]"                     -> accessor_elements
                  ?index: NUMBER                    -> index
 
                  ?key: CNAME                       -> key
@@ -43,11 +52,15 @@ parser = Lark('''%import common.NUMBER
                  %ignore WS
          ''', start='pipe')
 
-print(parser.parse('$'
-                   '| .'
-                   '| .a'
-                   '| [0]'
-                   '| "abcdefg"'
-                   '| true'
-                   '| false'
-                   '| 1 + 2 - 3 * 4 / 5 % 6 ^ 7').pretty())
+
+def demo(expression):
+    print(expression)
+    print(parser.parse(expression).pretty())
+
+
+demo('.a.b.c[0] = 123')
+demo('.a.b | .c[0]')
+demo('"abcdefg"')
+demo('true')
+demo('false')
+demo('1 + 2 - 3 * 4 / 5 % 6 ^ 7')
