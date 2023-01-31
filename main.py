@@ -27,7 +27,7 @@ parser = Lark('''%import common.NUMBER
                  ?math_prio2: math_prio2 /\\/|\\*|%/ math_prio1      -> math
                       | math_prio1
                  ?math_prio1: constant /\\^/ math_prio1              -> math
-                     | constant                                      -> constant
+                     | constant
                      | reference
 
                  ?constant: NUMBER                                   -> number
@@ -41,40 +41,64 @@ parser = Lark('''%import common.NUMBER
                      | "."                                           -> reference_context
                      | subreference+                                 -> reference_context_subreference
 
-                 ?subreference: "." key                              -> field
-                    | "[" index "]"                                  -> array_element
-                    | "["  "]"                                       -> array
+                 ?subreference: "." key                              -> reference_field
+                    | "[" index "]"                                  -> reference_array_element
+                    | "["  "]"                                       -> reference_array
 
-                 ?index: NUMBER                                      -> index
+                 ?index: NUMBER
 
-                 ?key: CNAME                                         -> key
+                 ?key: CNAME
                      | ESCAPED_STRING
 
                  %ignore WS
          ''', start='pipe', propagate_positions=True)
 
 
-def demo(expression):
-    print(expression)
-    parsed = parser.parse(expression)
-    if parsed.data == 'constant':
-        print("interpreted: " + str(interpret_constant(parsed.children[0])))
-    print(parsed.pretty())
+def interpret_number(value):
+    return float(value.children[0])
 
 
-def interpret_constant(parsed):
-    if parsed.data == 'number':
-        return float(parsed.children[0])
-    elif parsed.data == 'string':
-        return parsed.children[0][1:-1]
-    elif parsed.data == 'boolean_true':
-        return True
-    elif parsed.data == 'boolean_false':
-        return False
-    elif parsed.data == 'null':
-        return None
+def interpret_string(value):
+    return value.children[0][1:-1]
+
+
+def interpret_boolean_true(value):
+    return True
+
+
+def interpret_boolean_false(value):
+    return False
+
+
+def interpret_null(value):
+    return None
+
+
+mapping = {
+    'number': interpret_number,
+    'string': interpret_string,
+    'boolean_true': interpret_boolean_true,
+    'boolean_false': interpret_boolean_false,
+    'null': interpret_null,
+}
+
+
+def interpret_any(value):
+    if value.data in mapping:
+        return mapping[value.data](value)
     else:
-        raise Exception('Unknown constant type: ' + parsed.data)
+        raise Exception("Unknown value type: " + value.data)
+
+
+def demo(expression):
+    print("expression: " + expression)
+    parsed = parser.parse(expression)
+    try:
+        interpreted = interpret_any(parsed)
+        print("interpreted: " + str(interpreted))
+        print()
+    except Exception:
+        print(parsed.pretty())
 
 
 demo('.a.b.c[0] = 123')
