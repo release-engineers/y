@@ -8,12 +8,13 @@ parser = Lark('''%import common.NUMBER
                  %import common.ESCAPED_STRING
                  %import common.CNAME
                  %import common.WS
+                 ?pipe: expression "|" pipe
+                     |  expression "|" expression
                  ?expression: constant
                      | "$"                         -> element_root
                      | "."                         -> element
                      | "." key                     -> element_at_key
                      | "[" key "]"                 -> element_at_index
-                     | expression "|" expression   -> pipe
                      | expression "=" expression   -> set
                      | expression "+" expression   -> math_add
                      | expression "-" expression   -> math_subtract
@@ -27,7 +28,7 @@ parser = Lark('''%import common.NUMBER
                       | ESCAPED_STRING             -> string
                       | SIGNED_NUMBER              -> number
                  %ignore WS
-         ''', start='expression')
+         ''', start='pipe')
 
 print(parser.parse('$'
                    '| .'
