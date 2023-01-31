@@ -58,14 +58,45 @@ context_pipe = context_process
 mapping = {}
 
 
+def interpret_any(value):
+    if value.data in mapping:
+        interpreter = mapping[value.data]
+        return interpreter(value)
+    else:
+        raise Exception("unknown value: " + value.data)
+
+
+# -- math
+
+def interpret_math(value):
+    left = value.children[0]
+    left_value = interpret_any(left)
+    operator = value.children[1]
+    right = value.children[2]
+    right_value = interpret_any(right)
+    if operator == '+':
+        return left_value + right_value
+    elif operator == '-':
+        return left_value - right_value
+    elif operator == '*':
+        return left_value * right_value
+    elif operator == '/':
+        return left_value / right_value
+    elif operator == '%':
+        return left_value % right_value
+    elif operator == '^':
+        return left_value ** right_value
+    else:
+        raise Exception("unknown operator: " + operator)
+
+
 # -- pipe
 
 def interpret_pipe(value):
     global context_pipe
     original_context_pipe = context_pipe
     for expression in value.children:
-        expression_interpreter = mapping[expression.data]
-        result = expression_interpreter(expression)
+        result = interpret_any(expression)
         context_pipe = result
     context_pipe = original_context_pipe
 
@@ -128,6 +159,7 @@ def interpret_null(value):
     return None
 
 
+mapping['math'] = interpret_math
 mapping['pipe'] = interpret_pipe
 mapping['reference_root'] = interpret_reference_root
 mapping['reference_context'] = interpret_reference_context
@@ -147,7 +179,9 @@ def demo(expression):
     if parsed.data in mapping:
         interpreted = mapping[parsed.data](parsed)
         print("interpreted: " + str(interpreted))
-    print(parsed.pretty())
+        print()
+    else:
+        print(parsed.pretty())
 
 
 demo('.a.b.c[0] = 123')
