@@ -8,31 +8,46 @@ parser = Lark('''%import common.NUMBER
                  %import common.ESCAPED_STRING
                  %import common.CNAME
                  %import common.WS
+
                  ?pipe: expression "|" pipe        -> pipe
                      |  expression "|" expression  -> pipe
-                 ?expression: constant
-                     | "$"                         -> element_root
-                     | "."                         -> element
-                     | "." key                     -> element_at_key
-                     | "[" key "]"                 -> element_at_index
-                     | expression "=" expression   -> set
-                     | expression "*" expression   -> math_multiply
-                     | expression "/" expression   -> math_divide
-                     | expression "^" expression   -> math_power
-                     | expression "%" expression   -> math_modulo
-                     | expression "+" expression   -> math_add
-                     | expression "-" expression   -> math_subtract
-                 ?key: CNAME
-                     | ESCAPED_STRING
+
+                 ?expression: math_prio3
+                     | reference
+                     | constant
+
+                 ?math_prio3: math_prio3 ("+"|"-") math_prio2     -> math_prio3
+                      | math_prio2
+                 ?math_prio2: math_prio2 ("/"|"*"|"%") math_prio1 -> math_prio2
+                      | math_prio1
+                 ?math_prio1: constant "^" math_prio1             -> math_prio1
+                     | constant
+                     | reference
+
                  ?constant: NUMBER                 -> number
-                      | ESCAPED_STRING             -> string
                       | SIGNED_NUMBER              -> number
+                      | ESCAPED_STRING             -> string
+                      | "true"                     -> boolean_true
+                      | "false"                    -> boolean_false
+
+                 ?reference: "$"                   -> context_root
+                     | "."                         -> context
+                     | "." key                     -> context_child_by_key
+                     | "[" index "]"               -> context_child_by_index
+                 
+                 ?index: NUMBER                    -> index
+
+                 ?key: CNAME                       -> key
+                     | ESCAPED_STRING
+
                  %ignore WS
          ''', start='pipe')
 
 print(parser.parse('$'
                    '| .'
                    '| .a'
-                   '| [a]'
-                   '| .a = 1'
-                   '| 1 + 1 - 1 * 1 / 1 % 1 ^ 1').pretty())
+                   '| [0]'
+                   '| "abcdefg"'
+                   '| true'
+                   '| false'
+                   '| 1 + 2 - 3 * 4 / 5 % 6 ^ 7').pretty())
