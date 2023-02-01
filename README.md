@@ -43,22 +43,25 @@ y --file sample.yml -- '.a.b.c[0] = 123'
 
 -->
 
-| Expression          | Description                                                             | Usage sample                           |
-|---------------------|-------------------------------------------------------------------------|----------------------------------------|
-| Selectors           |                                                                         |                                        |
-| `$`                 | Select the root of the current document                                 | `y --file sample.yml -- '$'`           |
-| `.`                 | Select the root of the current context                                  | `y --file sample.yml -- '.'`           |
-| `.key`              | Select field `key` within the context                                   | `y --file sample.yml -- '.a.b.c'`      |
-| `[index]`           | Select element at `index` within the context                            | `y --file sample.yml -- '.a.b.c[0]'`   |
-| Operators           |                                                                         |                                        |
-| `reference = value` | Assign a value a given reference                                        | `y --file sample.yml -- '.x.y = .a.b'` |
-| `number + number`   | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                  | `y -- '1 + 2 * 4'`                     |
-| `&#124;`            | Pipe operator; pass the output of the left-hand expression to the right | `y -- '2 * 2 &#124; . * 4'`            |
-| Constants           |                                                                         |                                        |
-| `true`              | Boolean values `true` and `false`                                       | `y -- 'true'`                          |
-| `null`              | Null value                                                              | `y -- 'null'`                          |
-| `123`               | Numbers                                                                 | `y -- '123'`                           |
-| `"abc"`             | Strings                                                                 | `y -- '"abc"'`                         |
+| Expression                | Description                                                                                          | Usage sample                           |
+|---------------------------|------------------------------------------------------------------------------------------------------|----------------------------------------|
+| Selectors                 |                                                                                                      |                                        |
+| `.`                       | Select the root of the expression context                                                            | `y --file sample.yml -- '.'`           |
+| `.key`                    | Select field `key` within the context                                                                | `y --file sample.yml -- '.a.b.c'`      |
+| `[index]`                 | Select element at `index` within the context                                                         | `y --file sample.yml -- '.a.b.c[0]'`   |
+| `$`                       | Select the root of the program context.                                                              | `y --file sample.yml -- '$'`           |
+| Operators                 |                                                                                                      |                                        |
+| `expression = expression` | Assign a value a given reference                                                                     | `y --file sample.yml -- '.x.y = .a.b'` |
+| `expression + expression` | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                                               | `y -- '1 + 2 * 4'`                     |
+| `&#124;`                  | Pipe operator; pass the output of the left-hand expression as context for the right-hand expression. | `y -- '2 * 2 &#124; . * 4'`            |
+| Constants                 |                                                                                                      |                                        |
+| `true`                    | Boolean values `true` and `false`                                                                    | `y -- 'true'`                          |
+| `null`                    | Null value                                                                                           | `y -- 'null'`                          |
+| `123`                     | Numbers                                                                                              | `y -- '123'`                           |
+| `"abc"`                   | Strings                                                                                              | `y -- '"abc"'`                         |
+
+Note that the pipe operator `|` modifies the expression context (`.`) of the right-hand expression to the output of the left-hand expression, hence
+the availability of the `$` operator to select the root of the program context.
 
 ## Installation
 
