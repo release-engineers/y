@@ -37,6 +37,29 @@ y --inplace --file sample.yml -- '.a.b.c[0] = 123'
 y --file sample.yml -- '.a.b.c[0] = 123'
 ```
 
+### Expressions
+
+<!--
+
+-->
+
+| Expression          | Description                                                             | Usage sample                           |
+|---------------------|-------------------------------------------------------------------------|----------------------------------------|
+| Selectors           |                                                                         |                                        |
+| `$`                 | Select the root of the current document                                 | `y --file sample.yml -- '$'`           |
+| `.`                 | Select the root of the current context                                  | `y --file sample.yml -- '.'`           |
+| `.key`              | Select field `key` within the context                                   | `y --file sample.yml -- '.a.b.c'`      |
+| `[index]`           | Select element at `index` within the context                            | `y --file sample.yml -- '.a.b.c[0]'`   |
+| Operators           |                                                                         |                                        |
+| `reference = value` | Assign a value a given reference                                        | `y --file sample.yml -- '.x.y = .a.b'` |
+| `number + number`   | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                  | `y -- '1 + 2 * 4'`                     |
+| `&#124;`            | Pipe operator; pass the output of the left-hand expression to the right | `y -- '2 * 2 &#124; . * 4'`            |
+| Constants           |                                                                         |                                        |
+| `true`              | Boolean values `true` and `false`                                       | `y -- 'true'`                          |
+| `null`              | Null value                                                              | `y -- 'null'`                          |
+| `123`               | Numbers                                                                 | `y -- '123'`                           |
+| `"abc"`             | Strings                                                                 | `y -- '"abc"'`                         |
+
 ## Installation
 
 Presently this project is not published to any package registry. Install from project directory like so;
@@ -65,4 +88,3 @@ Install with Poetry:
 ```bash
 poetry install
 ```
-
