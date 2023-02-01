@@ -1,9 +1,8 @@
 a:
   b:
+    # comments and whitespace are preserved
+    # unless the object owning them is removed or replaced
     c:
-      # comments and whitespace are preserved
-
-      # unless the object owning them is removed or replaced
       - d: 1
       # replacing the array element `d: 1` above would remove this comment (and any potential whitespace around it)
       - e: 2

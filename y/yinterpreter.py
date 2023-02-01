@@ -61,12 +61,18 @@ parser = Lark('''%import common.NUMBER
          ''', start='pipe', propagate_positions=True)
 
 
+class IgnoreAliases(ruamel.yaml.representer.RoundTripRepresenter):
+    def ignore_aliases(self, data):
+        return True
+
+
 class YInterpreter:
     def __init__(self, indent_mapping=2, indent_sequence=4, indent_offset=2):
         self.root = {}
         self.context = YReference(self.root)
         self.functions = {}
         self.ruamelYaml = ruamel.yaml.YAML()
+        self.ruamelYaml.Representer = IgnoreAliases
         self.ruamelYaml.preserve_quotes = True
         self.ruamelYaml.indent(mapping=indent_mapping, sequence=indent_sequence, offset=indent_offset)
 

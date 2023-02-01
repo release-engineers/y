@@ -15,10 +15,9 @@ YAML document 'sample.yml';
 ---
 a:
   b:
+    # comments and whitespace are preserved
+    # unless the object owning them is removed or replaced
     c:
-      # comments and whitespace are preserved
-
-      # unless the object owning them is removed or replaced
       - d: 1
       # replacing the array element `d: 1` above would remove this comment (and any potential whitespace around it)
       - e: 2
@@ -39,14 +38,14 @@ y --file sample.yml -- '.a.b.c[0] = 123'
 
 ### Expressions
 
-| Selectors |                                              |                                      |
+| Selectors | Description                                  | Example                              |
 |-----------|----------------------------------------------|--------------------------------------|
 | `.`       | Select the root of the expression context    | `y --file sample.yml -- '.'`         |
 | `.key`    | Select field `key` within the context        | `y --file sample.yml -- '.a.b.c'`    |
 | `[index]` | Select element at `index` within the context | `y --file sample.yml -- '.a.b.c[0]'` |
 | `$`       | Select the root of the program context.      | `y --file sample.yml -- '$'`         |
 
-| Operators                 |                                                                                                      |                                        |
+| Operators                 | Description                                                                                          | Example                                |
 |---------------------------|------------------------------------------------------------------------------------------------------|----------------------------------------|
 | `expression = expression` | Assign a value a given reference                                                                     | `y --file sample.yml -- '.x.y = .a.b'` |
 | `expression + expression` | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                                               | `y -- '1 + 2 * 4'`                     |
@@ -55,7 +54,7 @@ y --file sample.yml -- '.a.b.c[0] = 123'
 Regarding mathematical operators; `^` is evaluated first, then `*`, `/` and `%` are evaluated left-to-right, and finally `+` and `-` are evaluated
 left-to-right.
 
-| Constants |                                   |                |
+| Constants | Description                       | Example        |
 |-----------|-----------------------------------|----------------|
 | `true`    | Boolean values `true` and `false` | `y -- 'true'`  |
 | `null`    | Null value                        | `y -- 'null'`  |
