@@ -299,7 +299,7 @@ class YInterpreter:
     def _interpret_assignment(self, value):
         value_sink = self._interpret(value.children[0])
         if not isinstance(value_sink, YReference):
-            raise Exception("Can only assign values to a reference, instead got: " + str(reference))
+            raise Exception("Can only assign values to a reference, instead got: " + str(value_sink))
         value_source = self._interpret(value.children[1])
         value_sink.set(value_source)
         return value_source
