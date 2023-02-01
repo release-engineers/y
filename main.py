@@ -55,153 +55,171 @@ parser = Lark('''%import common.NUMBER
                  %ignore WS
          ''', start='pipe', propagate_positions=True)
 
-context_process = {}
-context_pipe = context_process
-mapping = {}
+
+class YInterpreter:
+    def __init__(self):
+        self.root = {}
+        self.context = self.root
+        self.functions = {}
+        self.ruamelYaml = ruamel.yaml.YAML()
+        self.ruamelYaml.preserve_quotes = True
+
+    def load(self, source):
+        with open(source, 'r') as f:
+            self.root = self.ruamelYaml.load(f)
+            self.context = self.root
+
+    def interpret(self, value):
+        if value.data == 'math':
+            return self._interpret_math(value)
+        elif value.data == 'pipe':
+            return self._interpret_pipe(value)
+        elif value.data == 'reference_root':
+            return self._interpret_reference_root(value)
+        elif value.data == 'reference_context':
+            return self._interpret_reference_context(value)
+        elif value.data == 'subreference_field':
+            return self._interpret_subreference_field(value)
+        elif value.data == 'subreference_array_element':
+            return self._interpret_subreference_array_element(value)
+        elif value.data == 'subreference_array':
+            return self._interpret_subreference_array(value)
+        elif value.data == 'assignment':
+            return self._interpret_assignment(value)
+        elif value.data == 'call':
+            return self._interpret_call(value)
+        elif value.data == 'number':
+            return YInterpreter._interpret_number(value)
+        elif value.data == 'string':
+            return YInterpreter._interpret_string(value)
+        elif value.data == 'boolean_true':
+            return YInterpreter._interpret_boolean_true(value)
+        elif value.data == 'boolean_false':
+            return YInterpreter._interpret_boolean_false(value)
+        elif value.data == 'null':
+            return YInterpreter._interpret_null(value)
+        else:
+            raise Exception("unknown value: " + value.data)
+
+    def _interpret_math(self, value):
+        left = value.children[0]
+        left_value = self.interpret(left)
+        operator = value.children[1]
+        right = value.children[2]
+        right_value = self.interpret(right)
+        if operator == '+':
+            return left_value + right_value
+        elif operator == '-':
+            return left_value - right_value
+        elif operator == '*':
+            return left_value * right_value
+        elif operator == '/':
+            return left_value / right_value
+        elif operator == '%':
+            return left_value % right_value
+        elif operator == '^':
+            return left_value ** right_value
+        else:
+            raise Exception("unknown operator: " + operator)
+
+    def _interpret_pipe(self, value):
+        original_context = self.context
+        for expression in value.children:
+            result = self.interpret(expression)
+            self.context = result
+        self.context = original_context
+
+    def _interpret_reference_root(self, value):
+        original_context = self.context
+        self.context = self.root
+        result = self.context
+        for subreference in value.children:
+            result = self.interpret(subreference)
+            self.context = result
+        self.context = original_context
+        return result
+
+    def _interpret_reference_context(self, value):
+        original_context = self.context
+        result = self.context
+        for subreference in value.children:
+            result = self.interpret(subreference)
+            self.context = result
+        self.context = original_context
+        return result
+
+    def _interpret_subreference_field(self, value):
+        field = value.children[0]
+        if field not in self.context:
+            # TODO: Create only on assignment
+            self.context[field] = {}
+        return self.context[field]
+
+    def _interpret_subreference_array_element(self, value):
+        index = int(value.children[0])
+        if index >= len(self.context):
+            # TODO: Create only on assignment
+            self.context[index] = {}
+        return self.context[index]
+
+    def _interpret_subreference_array(self, value):
+        return self.context
+
+    @staticmethod
+    def _interpret_number(value):
+        return float(value.children[0])
+
+    @staticmethod
+    def _interpret_string(value):
+        return value.children[0][1:-1]
+
+    @staticmethod
+    def _interpret_boolean_true(value):
+        return True
+
+    @staticmethod
+    def _interpret_boolean_false(value):
+        return False
+
+    @staticmethod
+    def _interpret_null(value):
+        return None
+
+    def _interpret_assignment(self, value):
+        pass
+
+    def _interpret_call(self, value):
+        pass
 
 
-def interpret_any(value):
-    if value.data in mapping:
-        interpreter = mapping[value.data]
-        return interpreter(value)
-    else:
-        raise Exception("unknown value: " + value.data)
-
-
-# -- math
-
-def interpret_math(value):
-    left = value.children[0]
-    left_value = interpret_any(left)
-    operator = value.children[1]
-    right = value.children[2]
-    right_value = interpret_any(right)
-    if operator == '+':
-        return left_value + right_value
-    elif operator == '-':
-        return left_value - right_value
-    elif operator == '*':
-        return left_value * right_value
-    elif operator == '/':
-        return left_value / right_value
-    elif operator == '%':
-        return left_value % right_value
-    elif operator == '^':
-        return left_value ** right_value
-    else:
-        raise Exception("unknown operator: " + operator)
-
-
-# -- pipe
-
-def interpret_pipe(value):
-    global context_pipe
-    original_context_pipe = context_pipe
-    for expression in value.children:
-        result = interpret_any(expression)
-        context_pipe = result
-    context_pipe = original_context_pipe
-
-
-# -- references
-
-def interpret_reference_root(value):
-    result = context_process
-    for subreference in value.children:
-        subreference_interpreter = mapping[subreference.data]
-        result = subreference_interpreter(subreference, result)
-    return result
-
-
-def interpret_reference_context(value):
-    result = context_pipe
-    for subreference in value.children:
-        subreference_interpreter = mapping[subreference.data]
-        result = subreference_interpreter(subreference, result)
-    return result
-
-
-def interpret_subreference_field(value, context):
-    field = value.children[0]
-    if field not in context:
-        context[field] = {}
-    return context[field]
-
-
-def interpret_subreference_array_element(value, context):
-    index = int(value.children[0])
-    if index >= len(context):
-        context[index] = {}
-    return context[index]
-
-
-def interpret_subreference_array(value, context):
-    return context
-
-
-# -- constants
-
-def interpret_number(value):
-    return float(value.children[0])
-
-
-def interpret_string(value):
-    return value.children[0][1:-1]
-
-
-def interpret_boolean_true(value):
-    return True
-
-
-def interpret_boolean_false(value):
-    return False
-
-
-def interpret_null(value):
-    return None
-
-
-mapping['math'] = interpret_math
-mapping['pipe'] = interpret_pipe
-mapping['reference_root'] = interpret_reference_root
-mapping['reference_context'] = interpret_reference_context
-mapping['subreference_field'] = interpret_subreference_field
-mapping['subreference_array_element'] = interpret_subreference_array_element
-mapping['subreference_array'] = interpret_subreference_array
-mapping['number'] = interpret_number
-mapping['string'] = interpret_string
-mapping['boolean_true'] = interpret_boolean_true
-mapping['boolean_false'] = interpret_boolean_false
-mapping['null'] = interpret_null
-
-yaml = ruamel.yaml.YAML()
-yaml.preserve_quotes = True
+yinterpreter = YInterpreter()
+yinterpreter.load('sample.yml')
 
 
 def demo(expression):
-    print("expression: " + expression)
+    print("-- expression")
+    print(expression)
     parsed = parser.parse(expression)
-    if parsed.data in mapping:
-        interpreted = mapping[parsed.data](parsed)
-        # if interpreted is a ruamel yaml class, dump it
-        if isinstance(interpreted, ruamel.yaml.comments.CommentedBase):
-            print("yaml:")
-            yaml.dump(interpreted, sys.stdout)
-        print("interpreted: " + str(interpreted))
+    try:
+        result = yinterpreter.interpret(parsed)
+        if isinstance(result, ruamel.yaml.comments.CommentedBase):
+            print("-- result yaml")
+            yinterpreter.ruamelYaml.dump(result, sys.stdout)
+        print("-- result str")
+        print(str(result))
         print()
-    else:
+    except Exception as e:
+        print("-- exception")
+        print(e)
+        print("-- expression tree")
         print(parsed.pretty())
 
 
-with open("sample.yml", 'r') as f:
-    context_process = yaml.load(f)
-    context_pipe = context_process
-
 demo('.a.b.c[0]')
 demo('.a.b.c[0] = 123')
-demo('.a | .b | .c | [0]')
+demo('.a | .b')
 demo('"abcdefg"')
 demo('true')
 demo('false')
 demo('1 + 2 - 3 * 4 / 5 % 6 ^ 7')
-demo('target(1 + 2, 3, 4 + 5)')
+demo('custom_fn(1 + 2, 3, 4 + 5)')
