@@ -43,8 +43,8 @@ parser = Lark('''%import common.NUMBER
                      | "."                                           -> reference_context
                      | subreference+                                 -> reference_context
 
-                 ?subreference: "." key                              -> subreference_field
-                    | "[" index "]"                                  -> subreference_array_element
+                 ?subreference: "." key                              -> subreference_by_key
+                    | "[" index "]"                                  -> subreference_by_index
                     | "["  "]"                                       -> subreference_array
 
                  ?index: NUMBER
@@ -56,20 +56,93 @@ parser = Lark('''%import common.NUMBER
          ''', start='pipe', propagate_positions=True)
 
 
+class YReference:
+    """
+    A reference to a value in a YAML document.
+    Can be used to interact with YAML documents regardless of whether the value and its parent values exist.
+    """
+
+    def __init__(self, context):
+        """
+        :param context: Either a YReference or a dict
+        """
+        if isinstance(context, YReference):
+            self.context = context.context
+            self.context_parents = context.context_parents[:]
+            self.context_parent_keys = context.context_parent_keys[:]
+            self.context_parent_key_types = context.context_parent_key_types[:]
+        else:
+            self.context = context
+            self.context_parents = []
+            self.context_parent_keys = []
+            self.context_parent_key_types = []
+
+    def move_down(self, key, key_type):
+        """
+        :param key:
+        :param key_type: Either 'key' or 'index'
+        :return:
+        """
+        self.context_parents.append(self.context)
+        self.context_parent_keys.append(key)
+        self.context_parent_key_types.append(key_type)
+        if key_type == 'key':
+            if self.context is not None and key in self.context:
+                self.context = self.context[key]
+            else:
+                self.context = None
+        elif key_type == 'index':
+            if self.context is not None and len(self.context) > key:
+                self.context = self.context[key]
+            else:
+                self.context = None
+        else:
+            raise Exception("Unknown key type: " + key_type)
+
+    def move_up(self):
+        if len(self.context_parents) == 0:
+            raise Exception("Cannot move up in context past the context root")
+        self.context = self.context_parents.pop()
+        self.context_parent_keys.pop()
+        self.context_parent_key_types.pop()
+
+    def set(self, value):
+        pass
+
+
 class YInterpreter:
     def __init__(self):
         self.root = {}
-        self.context = self.root
+        self.context = YReference(self.root)
         self.functions = {}
         self.ruamelYaml = ruamel.yaml.YAML()
         self.ruamelYaml.preserve_quotes = True
 
     def load(self, source):
+        """
+        Load a YAML document from a file to become the root context.
+
+        :param source:
+        :return:
+        """
         with open(source, 'r') as f:
-            self.root = self.ruamelYaml.load(f)
-            self.context = self.root
+            new_root = self.ruamelYaml.load(f)
+            self.root = new_root
+            self.context = YReference(new_root)
 
     def interpret(self, value):
+        """
+        Evaluate a Lark-parsed expression against the current context.
+
+        :param value:
+        :return:
+        """
+        result = self._interpret(value)
+        if isinstance(result, YReference):
+            return result.context
+        return result
+
+    def _interpret(self, value):
         if value.data == 'math':
             return self._interpret_math(value)
         elif value.data == 'pipe':
@@ -78,10 +151,10 @@ class YInterpreter:
             return self._interpret_reference_root(value)
         elif value.data == 'reference_context':
             return self._interpret_reference_context(value)
-        elif value.data == 'subreference_field':
-            return self._interpret_subreference_field(value)
-        elif value.data == 'subreference_array_element':
-            return self._interpret_subreference_array_element(value)
+        elif value.data == 'subreference_by_key':
+            return self._interpret_subreference_by_key(value)
+        elif value.data == 'subreference_by_index':
+            return self._interpret_subreference_by_index(value)
         elif value.data == 'subreference_array':
             return self._interpret_subreference_array(value)
         elif value.data == 'assignment':
@@ -103,10 +176,10 @@ class YInterpreter:
 
     def _interpret_math(self, value):
         left = value.children[0]
-        left_value = self.interpret(left)
+        left_value = self._interpret(left)
         operator = value.children[1]
         right = value.children[2]
-        right_value = self.interpret(right)
+        right_value = self._interpret(right)
         if operator == '+':
             return left_value + right_value
         elif operator == '-':
@@ -126,43 +199,38 @@ class YInterpreter:
         original_context = self.context
         result = self.context
         for expression in value.children:
-            result = self.interpret(expression)
+            result = self._interpret(expression)
             self.context = result
         self.context = original_context
         return result
 
     def _interpret_reference_root(self, value):
         original_context = self.context
-        self.context = self.root
-        result = self.context
+        temporary_context = YReference(self.root)
+        self.context = temporary_context
         for subreference in value.children:
-            result = self.interpret(subreference)
-            self.context = result
+            self._interpret(subreference)
         self.context = original_context
-        return result
+        return temporary_context
 
     def _interpret_reference_context(self, value):
         original_context = self.context
-        result = self.context
+        temporary_context = YReference(self.context)
+        self.context = temporary_context
         for subreference in value.children:
-            result = self.interpret(subreference)
-            self.context = result
+            self._interpret(subreference)
         self.context = original_context
-        return result
+        return temporary_context
 
-    def _interpret_subreference_field(self, value):
-        field = value.children[0]
-        if field not in self.context:
-            # TODO: Create only on assignment
-            self.context[field] = {}
-        return self.context[field]
+    def _interpret_subreference_by_key(self, value):
+        key = value.children[0]
+        self.context.move_down(key, 'key')
+        return self.context
 
-    def _interpret_subreference_array_element(self, value):
+    def _interpret_subreference_by_index(self, value):
         index = int(value.children[0])
-        if index >= len(self.context):
-            # TODO: Create only on assignment
-            self.context[index] = {}
-        return self.context[index]
+        self.context.move_down(index, 'index')
+        return self.context
 
     def _interpret_subreference_array(self, value):
         return self.context
@@ -188,7 +256,11 @@ class YInterpreter:
         return None
 
     def _interpret_assignment(self, value):
-        pass
+        reference = self._interpret(value.children[0])
+        if not isinstance(reference, YReference):
+            raise Exception("Can only assign values to a reference, instead got: " + str(reference))
+        value = self._interpret(value.children[1])
+        reference.set(value)
 
     def _interpret_call(self, value):
         pass
@@ -205,6 +277,8 @@ if __name__ == '__main__':
             yinterpreter.ruamelYaml.dump(value, sys.stdout)
         else:
             print(value)
+        if isinstance(value, Exception):
+            raise value
 
 
     def test(expression, expected):
