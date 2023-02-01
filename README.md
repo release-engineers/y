@@ -6,6 +6,12 @@ able to read them afterwards, they're probably not the best tools for the job.
 
 **y** aims to be a tool familiar for users of yq and jq while preserving your YAML's comments, block & flow style, key ordering, anchor names & more.
 
+Install the `y` CLI utility and Python package with;
+
+```bash
+pip install re-y
+```
+
 ## Usage
 
 **y** comes with an expression language similar to yq which can be used to select and edit parts of a YAML document. Here's examples for a
@@ -63,17 +69,6 @@ left-to-right.
 
 Note that the pipe operator `|` modifies the expression context (`.`) of the right-hand expression to the output of the left-hand expression, hence
 the availability of the `$` operator to select the root of the program context.
-
-## Installation
-
-Presently this project is not published to any package registry. Install from project directory like so;
-
-```bash
-poetry build
-python -m pip install ./dist/*.whl
-```
-
-This will make the `y` command available in to your PATH.
 
 ## Contributing
 

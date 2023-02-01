@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "y"
+name = "re-y"
 version = "1.0.0"
 description = ""
 authors = ["skphilipp <philipp@release-engineers.com>"]

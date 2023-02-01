@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import io
 
 import ruamel.yaml
 from lark import Lark
