@@ -6,6 +6,8 @@ import sys
 
 
 def usage():
+    print("  y -- https://github.com/release-engineers/y")
+    print()
     print("Usage: y [options] [-- <args>]")
     print("  -h, --help         Show this help message and exit")
     print("  -f, --file <file>  The file to load where '-' denotes stdin")

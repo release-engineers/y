@@ -70,7 +70,7 @@ Presently this project is not published to any package registry. Install from pr
 
 ```bash
 poetry build
-pip install ./y/dist/*.whl
+python -m pip install ./dist/*.whl
 ```
 
 This will make the `y` command available in to your PATH.
