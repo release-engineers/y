@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import io
 
 import ruamel.yaml
 from lark import Lark
@@ -76,10 +77,14 @@ class YInterpreter:
         :param source:
         :return:
         """
-        with open(source, 'r') as f:
-            new_root = self.ruamelYaml.load(f)
-            self.root = new_root
-            self.context = YReference(new_root)
+        if isinstance(source, str):
+            with open(source, 'r') as f:
+                root = self.ruamelYaml.load(f)
+        else:
+            source_content = source.read()
+            root = self.ruamelYaml.load(source_content)
+        self.root = root
+        self.context = YReference(root)
 
     def dump(self, destination):
         """
@@ -88,19 +93,10 @@ class YInterpreter:
         :param destination:
         :return:
         """
+        # prevent ruamel.yaml.YAML.dump from outputting "null\n..."
+        if self.root is None:
+            return
         self.ruamelYaml.dump(self.root, destination)
-
-    def interpret_parsed(self, value):
-        """
-        Evaluate a Lark-parsed Y expression against the current context.
-
-        :param value:
-        :return:
-        """
-        result = self._interpret(value)
-        if isinstance(result, YReference):
-            return result.context
-        return result
 
     def interpret(self, expression):
         """
@@ -110,9 +106,27 @@ class YInterpreter:
         :return:
         """
         parsed_tree = parser.parse(expression)
-        return self.interpret_parsed(parsed_tree)
+        return self._interpret_resolving(parsed_tree)
+
+    def _interpret_resolving(self, value):
+        """
+        Interpret a parsed Y expression, resolving the result to a value.
+
+        :param value:
+        :return:
+        """
+        result = self._interpret(value)
+        if isinstance(result, YReference):
+            return result.context
+        return result
 
     def _interpret(self, value):
+        """
+        Interpret a parsed Y expression.
+
+        :param value: A Lark Tree object, representing a part of a Y expression.
+        :return:
+        """
         if value.data == 'math':
             return self._interpret_math(value)
         elif value.data == 'pipe':
@@ -146,10 +160,10 @@ class YInterpreter:
 
     def _interpret_math(self, value):
         left = value.children[0]
-        left_value = self._interpret(left)
+        left_value = self._interpret_resolving(left)
         operator = value.children[1]
         right = value.children[2]
-        right_value = self._interpret(right)
+        right_value = self._interpret_resolving(right)
         if operator == '+':
             return left_value + right_value
         elif operator == '-':
@@ -229,12 +243,12 @@ class YInterpreter:
         value_sink = self._interpret(value.children[0])
         if not isinstance(value_sink, YReference):
             raise Exception("Can only assign values to a reference, instead got: " + str(value_sink))
-        value_source = self._interpret(value.children[1])
+        value_source = self._interpret_resolving(value.children[1])
         value_sink.set(value_source)
         return value_source
 
     def _interpret_call(self, value):
-        pass
+        return None
 
 
 if __name__ == '__main__':
@@ -255,7 +269,7 @@ if __name__ == '__main__':
     def test(expression, expected):
         parsed = parser.parse(expression)
         try:
-            result = yinterpreter.interpret_parsed(parsed)
+            result = yinterpreter._interpret_resolving(parsed)
             if result != expected:
                 test_print('expected', expected)
                 test_print('result', result)
@@ -267,16 +281,23 @@ if __name__ == '__main__':
             test_print('expression tree', parsed.pretty())
 
 
-    test('.a', yinterpreter.root['a'])
-    test('.a.b', yinterpreter.root['a']['b'])
-    test('.a.b.c', yinterpreter.root['a']['b']['c'])
-    test('.a.b.c[0]', yinterpreter.root['a']['b']['c'][0])
-    test('.a | .b | .c | [0]', yinterpreter.root['a']['b']['c'][0])
+    a = yinterpreter.root['a']
+    b = a['b']
+    c = b['c']
+
+    test('.a', a)
+    test('.a.b', b)
+    test('.a.b.c', c)
+    test('.a.b.c[0]', c[0])
+    test('.a | .b | .c | [0]', c[0])
     test('.a.b.c[0] = 123', 123)
     test('.a.b.c[0]', 123)
+    test('.a = .a.b', b)
+    test('.a', b)
     test('"abcdefg"', 'abcdefg')
     test('true', True)
     test('false', False)
     test('1 + 2 - 3 * 4 / 5 % 6 ^ 7', 1 + 2 - 3 * 4 / 5 % 6 ** 7)
+    test('2 * 2 | . * 2', 8)
     test('custom_fn(1 + 2, 3, 4 + 5)', None)
     print('done')

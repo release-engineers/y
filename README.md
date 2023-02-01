@@ -1,7 +1,5 @@
 # y
 
-:warning: **This project is still in early development and not ready for production use.** :warning:
-
 A tool like yq (and jq) but without their feature of completely cleaning up your YAML documents. yq and jq are great tools especially for making
 changes to documents that are not intended to be human-readable. However, when you want to make changes programmatically to documents and still be
 able to read them afterwards, they're probably not the best tools for the job.

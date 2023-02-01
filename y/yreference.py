@@ -25,6 +25,12 @@ class YReference:
             self.context_parent_keys = []
             self.context_parent_key_types = []
 
+    def root(self):
+        if len(self.context_parents) == 0:
+            return self.context
+        else:
+            return self.context_parents[0]
+
     def move_down(self, key, key_type):
         """
         :param key:
