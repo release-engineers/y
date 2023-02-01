@@ -77,3 +77,6 @@ if __name__ == '__main__':
     if inplace:
         with open(file_reference, 'w') as file:
             yinterpreter.dump(file)
+
+    else:
+        yinterpreter.dump(sys.stdout)
