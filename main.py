@@ -297,11 +297,12 @@ class YInterpreter:
         return None
 
     def _interpret_assignment(self, value):
-        reference = self._interpret(value.children[0])
-        if not isinstance(reference, YReference):
+        value_sink = self._interpret(value.children[0])
+        if not isinstance(value_sink, YReference):
             raise Exception("Can only assign values to a reference, instead got: " + str(reference))
-        value = self._interpret(value.children[1])
-        reference.set(value)
+        value_source = self._interpret(value.children[1])
+        value_sink.set(value_source)
+        return value_source
 
     def _interpret_call(self, value):
         pass
@@ -326,12 +327,11 @@ if __name__ == '__main__':
         parsed = parser.parse(expression)
         try:
             result = yinterpreter.interpret(parsed)
-            if expected is not None:
-                if result != expected:
-                    test_print('expected', expected)
-                    test_print('result', result)
-                    test_print('expression', expression)
-                    test_print('expression tree', parsed.pretty())
+            if result != expected:
+                test_print('expected', expected)
+                test_print('result', result)
+                test_print('expression', expression)
+                test_print('expression tree', parsed.pretty())
         except Exception as e:
             test_print('exception', e)
             test_print('expression', expression)
@@ -343,7 +343,7 @@ if __name__ == '__main__':
     test('.a.b.c', yinterpreter.root['a']['b']['c'])
     test('.a.b.c[0]', yinterpreter.root['a']['b']['c'][0])
     test('.a | .b | .c | [0]', yinterpreter.root['a']['b']['c'][0])
-    test('.a.b.c[0] = 123', None)
+    test('.a.b.c[0] = 123', 123)
     test('.a.b.c[0]', 123)
     test('"abcdefg"', 'abcdefg')
     test('true', True)
