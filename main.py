@@ -3,6 +3,7 @@
 
 from lark import Lark
 import ruamel.yaml
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 import sys
 
 parser = Lark('''%import common.NUMBER
@@ -106,8 +107,48 @@ class YReference:
         self.context_parent_keys.pop()
         self.context_parent_key_types.pop()
 
+    def _materialize_path_segment(self, i, value=None):
+        ith_parent = self.context_parents[i]
+        ith_key = self.context_parent_keys[i]
+        ith_key_type = self.context_parent_key_types[i]
+        if ith_key_type == 'key':
+            if isinstance(ith_parent, CommentedMap):
+                ith_parent[ith_key] = value
+                if i == len(self.context_parents) - 1:
+                    self.context = value
+                else:
+                    self.context_parents[i + 1] = value
+            else:
+                raise Exception(f"Cannot create key '{ith_key}' in non-mapping type, parent is {type(ith_parent)}")
+        elif ith_key_type == 'index':
+            if isinstance(ith_parent, CommentedSeq):
+                ith_parent[ith_key] = value
+                if i == len(self.context_parents) - 1:
+                    self.context = value
+                else:
+                    self.context_parents[i + 1] = value
+            else:
+                raise Exception(f"Cannot create key '{ith_key}' in non-sequence type, parent is {type(ith_parent)}")
+
+    def _materialize_path(self):
+        for i in range(len(self.context_parents) - 1):
+            ith_parent = self.context_parents[i]
+            ith_key = self.context_parent_keys[i]
+            ith_key_type = self.context_parent_key_types[i]
+            if ith_key not in ith_parent:
+                if ith_key_type == 'key':
+                    self._materialize_path_segment(i, CommentedMap())
+                elif ith_key_type == 'index':
+                    self._materialize_path_segment(i, CommentedSeq())
+
     def set(self, value):
-        pass
+        """
+        Set the value of the reference to the given value.
+        :param value:
+        :return:
+        """
+        self._materialize_path()
+        self._materialize_path_segment(len(self.context_parents) - 1, value)
 
 
 class YInterpreter:
@@ -223,7 +264,7 @@ class YInterpreter:
         return temporary_context
 
     def _interpret_subreference_by_key(self, value):
-        key = value.children[0]
+        key = str(value.children[0])
         self.context.move_down(key, 'key')
         return self.context
 
@@ -303,6 +344,7 @@ if __name__ == '__main__':
     test('.a.b.c[0]', yinterpreter.root['a']['b']['c'][0])
     test('.a | .b | .c | [0]', yinterpreter.root['a']['b']['c'][0])
     test('.a.b.c[0] = 123', None)
+    test('.a.b.c[0]', 123)
     test('"abcdefg"', 'abcdefg')
     test('true', True)
     test('false', False)
