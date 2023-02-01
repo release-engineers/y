@@ -199,33 +199,28 @@ if __name__ == '__main__':
     yinterpreter.load('sample.yml')
 
 
+    def test_print(name, value):
+        print(f"-- {name}")
+        if isinstance(value, ruamel.yaml.comments.CommentedBase):
+            yinterpreter.ruamelYaml.dump(value, sys.stdout)
+        else:
+            print(value)
+
+
     def test(expression, expected):
         parsed = parser.parse(expression)
         try:
             result = yinterpreter.interpret(parsed)
             if expected is not None:
                 if result != expected:
-                    print("-- expected")
-                    if isinstance(expected, ruamel.yaml.comments.CommentedBase):
-                        yinterpreter.ruamelYaml.dump(expected, sys.stdout)
-                    else:
-                        print(expected)
-                    print("-- result")
-                    if isinstance(result, ruamel.yaml.comments.CommentedBase):
-                        yinterpreter.ruamelYaml.dump(result, sys.stdout)
-                    else:
-                        print(result)
-                    print("-- expression")
-                    print(expression)
-                    print("-- expression tree")
-                    print(parsed.pretty())
+                    test_print('expected', expected)
+                    test_print('result', result)
+                    test_print('expression', expression)
+                    test_print('expression tree', parsed.pretty())
         except Exception as e:
-            print("-- exception")
-            print(e)
-            print("-- expression")
-            print(expression)
-            print("-- expression tree")
-            print(parsed.pretty())
+            test_print('exception', e)
+            test_print('expression', expression)
+            test_print('expression tree', parsed.pretty())
 
 
     test('.a', yinterpreter.root['a'])
