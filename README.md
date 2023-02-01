@@ -37,12 +37,32 @@ y --inplace --file sample.yml -- '.a.b.c[0] = 123'
 y --file sample.yml -- '.a.b.c[0] = 123'
 ```
 
+## Installation
+
+Presently this project is not published to any package registry. Install from project directory like so;
+
+```bash
+poetry build
+pip install ./y/dist/*.whl
+```
+
+This will make the `y` command available in to your PATH.
+
 ## Contributing
 
 ### Requirements & Installation
 
-**y** is being developed on Python 3.9. Dependencies can be installed with pip:
+**y** is being developed on Python 3.9 & Poetry.
+
+Build with Poetry:
 
 ```bash
-pip install -r requirements.txt
+poetry build
 ```
+
+Install with Poetry:
+
+```bash
+poetry install
+```
+

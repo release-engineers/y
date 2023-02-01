@@ -1,24 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from yinterpreter import YInterpreter
+from y.yinterpreter import YInterpreter
 import sys
 
-if __name__ == '__main__':
-    yinterpreter = YInterpreter()
+
+def usage():
+    print("Usage: y [options] [-- <args>]")
+    print("  -h, --help         Show this help message and exit")
+    print("  -f, --file <file>  The file to load where '-' denotes stdin")
+    print("  -i, --inplace      Edit a source file in place")
+    print("  --indent-mapping <indent>  Indentation for mapping, default 2")
+    print("  --indent-sequence <indent>  Indentation for sequence, default 4")
+    print("  --indent-offset <offset>  Indentation offset, default 2")
+    print("  -- <args>          Expression to evaluate")
 
 
-    def usage():
-        print("Usage: y [options] [-- <args>]")
-        print("  -h, --help         Show this help message and exit")
-        print("  -f, --file <file>  The file to load where '-' denotes stdin")
-        print("  -i, --inplace      Edit a source file in place")
-        print("  --indent-mapping <indent>  Indentation for mapping, default 2")
-        print("  --indent-sequence <indent>  Indentation for sequence, default 4")
-        print("  --indent-offset <offset>  Indentation offset, default 2")
-        print("  -- <args>          Expression to evaluate")
-
-
+def main():
     inplace = False
     file_reference = None
     expressions = []
@@ -77,6 +75,9 @@ if __name__ == '__main__':
     if inplace:
         with open(file_reference, 'w') as file:
             yinterpreter.dump(file)
-
     else:
         yinterpreter.dump(sys.stdout)
+
+
+if __name__ == '__main__':
+    main()

@@ -7,7 +7,7 @@ import ruamel.yaml
 from lark import Lark
 from ruamel.yaml.comments import CommentedMap
 
-from yreference import YReference
+from y.yreference import YReference
 
 parser = Lark('''%import common.NUMBER
                  %import common.SIGNED_NUMBER

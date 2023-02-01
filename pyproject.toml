@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "y"
+version = "1.0.0"
+description = ""
+authors = ["skphilipp <philipp@release-engineers.com>"]
+packages = [{include = "y"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+"ruamel.yaml" = "0.17.21"
+lark = "1.1.5"
+
+[tool.poetry.scripts]
+y = "y.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
