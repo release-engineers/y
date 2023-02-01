@@ -124,10 +124,12 @@ class YInterpreter:
 
     def _interpret_pipe(self, value):
         original_context = self.context
+        result = self.context
         for expression in value.children:
             result = self.interpret(expression)
             self.context = result
         self.context = original_context
+        return result
 
     def _interpret_reference_root(self, value):
         original_context = self.context
@@ -192,34 +194,48 @@ class YInterpreter:
         pass
 
 
-yinterpreter = YInterpreter()
-yinterpreter.load('sample.yml')
+if __name__ == '__main__':
+    yinterpreter = YInterpreter()
+    yinterpreter.load('sample.yml')
 
 
-def demo(expression):
-    print("-- expression")
-    print(expression)
-    parsed = parser.parse(expression)
-    try:
-        result = yinterpreter.interpret(parsed)
-        if isinstance(result, ruamel.yaml.comments.CommentedBase):
-            print("-- result yaml")
-            yinterpreter.ruamelYaml.dump(result, sys.stdout)
-        print("-- result str")
-        print(str(result))
-        print()
-    except Exception as e:
-        print("-- exception")
-        print(e)
-        print("-- expression tree")
-        print(parsed.pretty())
+    def test(expression, expected):
+        parsed = parser.parse(expression)
+        try:
+            result = yinterpreter.interpret(parsed)
+            if expected is not None:
+                if result != expected:
+                    print("-- expected")
+                    if isinstance(expected, ruamel.yaml.comments.CommentedBase):
+                        yinterpreter.ruamelYaml.dump(expected, sys.stdout)
+                    else:
+                        print(expected)
+                    print("-- result")
+                    if isinstance(result, ruamel.yaml.comments.CommentedBase):
+                        yinterpreter.ruamelYaml.dump(result, sys.stdout)
+                    else:
+                        print(result)
+                    print("-- expression")
+                    print(expression)
+                    print("-- expression tree")
+                    print(parsed.pretty())
+        except Exception as e:
+            print("-- exception")
+            print(e)
+            print("-- expression")
+            print(expression)
+            print("-- expression tree")
+            print(parsed.pretty())
 
 
-demo('.a.b.c[0]')
-demo('.a.b.c[0] = 123')
-demo('.a | .b')
-demo('"abcdefg"')
-demo('true')
-demo('false')
-demo('1 + 2 - 3 * 4 / 5 % 6 ^ 7')
-demo('custom_fn(1 + 2, 3, 4 + 5)')
+    test('.a', yinterpreter.root['a'])
+    test('.a.b', yinterpreter.root['a']['b'])
+    test('.a.b.c', yinterpreter.root['a']['b']['c'])
+    test('.a.b.c[0]', yinterpreter.root['a']['b']['c'][0])
+    test('.a.b.c[0] = 123', None)
+    test('.a | .b', yinterpreter.root['a']['b'])
+    test('"abcdefg"', 'abcdefg')
+    test('true', True)
+    test('false', False)
+    test('1 + 2 - 3 * 4 / 5 % 6 ^ 7', 1 + 2 - 3 * 4 / 5 % 6 ** 7)
+    test('custom_fn(1 + 2, 3, 4 + 5)', None)
