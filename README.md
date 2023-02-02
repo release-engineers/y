@@ -60,15 +60,16 @@ y --file sample.yml -- '.a.b.c[0] = 123'
 Regarding mathematical operators; `^` is evaluated first, then `*`, `/` and `%` are evaluated left-to-right, and finally `+` and `-` are evaluated
 left-to-right.
 
+Note that the pipe operator `|` modifies the expression context (`.`) of the right-hand expression to the output of the left-hand expression, hence
+the availability of the `$` operator to select the root of the program context.
+
+
 | Constants | Description                       | Example        |
 |-----------|-----------------------------------|----------------|
 | `true`    | Boolean values `true` and `false` | `y -- 'true'`  |
 | `null`    | Null value                        | `y -- 'null'`  |
 | `123`     | Numbers                           | `y -- '123'`   |
 | `"abc"`   | Strings                           | `y -- '"abc"'` |
-
-Note that the pipe operator `|` modifies the expression context (`.`) of the right-hand expression to the output of the left-hand expression, hence
-the availability of the `$` operator to select the root of the program context.
 
 ## Contributing
 
