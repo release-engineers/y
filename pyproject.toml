@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "re-y"
-version = "1.0.0"
+version = "1.0.1"
 description = ""
 authors = ["skphilipp <philipp@release-engineers.com>"]
 packages = [{include = "y"}]

@@ -56,7 +56,7 @@ y --file sample.yml -- '.a.b.c[0] = 123'
 | `expression = expression`                 | Assign a value a given reference                                                                     | `y '.a = .b'`                      |
 | `expression + expression`                 | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                                               | `y '.1 + 2 * 4'`                   |
 | <code>expression &#124; expression</code> | Pipe operator; pass the output of the left-hand expression as context for the right-hand expression. | <code>y -- '2 &#124; . * 2'</code> |
-| `(expression)`                            | Precedence operator; evaluate the expression within parentheses first.                               | `y '(2 &#124; . * 2)'`             |
+| `(expression)`                            | Precedence operator; evaluate the expression within parentheses first.                               | <code>y '(2 &#124; . * 2)'</code>  |
 
 :information_source: Regarding mathematical operators; `^` is evaluated first, then `*`, `/` and `%` are evaluated left-to-right, and finally `+`
 and `-` are evaluated left-to-right.
