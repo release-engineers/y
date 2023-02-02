@@ -6,6 +6,8 @@ able to read them afterwards, they're probably not the best tools for the job.
 
 **y** aims to be a tool familiar for users of yq and jq while preserving your YAML's comments, block & flow style, key ordering, anchor names & more.
 
+<img src="./docs/cinema.svg">
+
 Install the `y` CLI utility and Python package with;
 
 ```bash
