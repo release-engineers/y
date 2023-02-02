@@ -4,7 +4,7 @@ A tool like yq (and jq) but without their feature of completely cleaning up your
 changes to documents that are not intended to be human-readable. However, when you want to make changes programmatically to documents and still be
 able to read them afterwards, they're probably not the best tools for the job.
 
-**y** aims to be a tool familiar for users of yq and jq while preserving your YAML's comments, block & flow style, key ordering, anchor names & more.
+**y** aims to be a tool familiar for users of yq and jq while preserving your YAML's comments, block & flow style, key ordering, blank lines & more.
 
 <img src="./docs/cinema.svg">
 
