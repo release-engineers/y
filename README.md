@@ -51,25 +51,27 @@ y --file sample.yml -- '.a.b.c[0] = 123'
 | `[index]` | Select element at `index` within the context | `y --file sample.yml -- '.a.b.c[0]'` |
 | `$`       | Select the root of the program context.      | `y --file sample.yml -- '$'`         |
 
-| Operators                                 | Description                                                                                          | Example                                |
-|-------------------------------------------|------------------------------------------------------------------------------------------------------|----------------------------------------|
-| `expression = expression`                 | Assign a value a given reference                                                                     | `y --file sample.yml -- '.x.y = .a.b'` |
-| `expression + expression`                 | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                                               | `y -- '1 + 2 * 4'`                     |
-| <code>expression &#124; expression</code> | Pipe operator; pass the output of the left-hand expression as context for the right-hand expression. | <code>y -- '2 * 2 &#124; . * 4'</code> |
+| Operators                                 | Description                                                                                          | Example                                 |
+|-------------------------------------------|------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| `expression = expression`                 | Assign a value a given reference                                                                     | `y -- '.a = .b'`                        |
+| `expression + expression`                 | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                                               | `y -- '.a = 1 + 2 * 4'`                 |
+| <code>expression &#124; expression</code> | Pipe operator; pass the output of the left-hand expression as context for the right-hand expression. | <code>y -- '.a = 2 &#124; . * 2'</code> |
+| `(expression)`                            | Precedence operator; evaluate the expression within parentheses first.                               | `y -- '.a = (2 &#124; . * 2)'`          |
 
-Regarding mathematical operators; `^` is evaluated first, then `*`, `/` and `%` are evaluated left-to-right, and finally `+` and `-` are evaluated
-left-to-right.
+:information_source: Regarding mathematical operators; `^` is evaluated first, then `*`, `/` and `%` are evaluated left-to-right, and finally `+`
+and `-` are evaluated left-to-right.
 
-Note that the pipe operator `|` modifies the expression context (`.`) of the right-hand expression to the output of the left-hand expression, hence
-the availability of the `$` operator to select the root of the program context.
+:warning: Assigning precedence to mathematical operators with parentheses is not supported.
 
+:information_source: The pipe operator `|` modifies the expression context (`.`) of the right-hand expression to the output of the left-hand
+expression, hence the availability of the `$` operator to select the root of the program context.
 
-| Constants | Description                       | Example        |
-|-----------|-----------------------------------|----------------|
-| `true`    | Boolean values `true` and `false` | `y -- 'true'`  |
-| `null`    | Null value                        | `y -- 'null'`  |
-| `123`     | Numbers                           | `y -- '123'`   |
-| `"abc"`   | Strings                           | `y -- '"abc"'` |
+| Constants | Description                       | Example             |
+|-----------|-----------------------------------|---------------------|
+| `true`    | Boolean values `true` and `false` | `y -- '.a = true'`  |
+| `null`    | Null value                        | `y -- '.a = null'`  |
+| `123`     | Numbers                           | `y -- '.a = 123'`   |
+| `"abc"`   | Strings                           | `y -- '".a = abc"'` |
 
 ## Contributing
 

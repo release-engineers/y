@@ -15,10 +15,11 @@ parser = Lark('''%import common.NUMBER
                  %import common.CNAME
                  %import common.WS
 
-                 ?pipe: expression "|" pipe                          -> pipe
-                     | expression
-
-                 ?expression: math_prio3
+                 ?expression: "(" expression ")"
+                     | expression "|" expression                     -> pipe
+                     | math_prio3
+                     | math_prio2
+                     | math_prio1
                      | assignment
                      | reference
                      | constant
@@ -26,7 +27,7 @@ parser = Lark('''%import common.NUMBER
 
                  ?call: key "(" expression ( "," expression )* ")"   -> call
 
-                 ?assignment: reference "=" expression               -> assignment
+                 ?assignment: expression "=" expression              -> assignment
 
                  ?math_prio3: math_prio3 /\\+|-/ math_prio2          -> math
                       | math_prio2
@@ -57,7 +58,7 @@ parser = Lark('''%import common.NUMBER
                      | ESCAPED_STRING
 
                  %ignore WS
-         ''', start='pipe', propagate_positions=True)
+         ''', start='expression', propagate_positions=True)
 
 
 class IgnoreAliases(ruamel.yaml.representer.RoundTripRepresenter):
@@ -85,9 +86,11 @@ class YInterpreter:
         if isinstance(source, str):
             with open(source, 'r') as f:
                 root = self.ruamelYaml.load(f)
-        else:
+        elif not source.isatty():
             source_content = source.read()
             root = self.ruamelYaml.load(source_content)
+        else:
+            root = self.ruamelYaml.load("{}")
         self.root = root
         self.context = YReference(root)
 
@@ -304,5 +307,11 @@ if __name__ == '__main__':
     test('false', False)
     test('1 + 2 - 3 * 4 / 5 % 6 ^ 7', 1 + 2 - 3 * 4 / 5 % 6 ** 7)
     test('2 * 2 | . * 2', 8)
+    test('.d = 2 | . * 2', 4)
+    test('.d', 2)
+    test('(.e = 2) | . * 2', 4)
+    test('.e', 2)
+    test('.f = (2 | . * 2)', 4)
+    test('.f', 4)
     test('custom_fn(1 + 2, 3, 4 + 5)', None)
     print('done')
