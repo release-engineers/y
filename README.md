@@ -91,7 +91,7 @@ Install with Poetry:
 poetry install
 ```
 
-Install with your favorite shell:
+Run with your favorite shell:
 
 ```bash
 ./bin/y
