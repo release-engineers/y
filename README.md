@@ -90,3 +90,9 @@ Install with Poetry:
 ```bash
 poetry install
 ```
+
+Install with your favorite shell:
+
+```bash
+./bin/y
+```
