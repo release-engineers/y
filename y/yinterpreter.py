@@ -61,9 +61,21 @@ parser = Lark('''%import common.NUMBER
          ''', start='expression', propagate_positions=True)
 
 
-class IgnoreAliases(ruamel.yaml.representer.RoundTripRepresenter):
+class RuamelPatchIgnoreAliases(ruamel.yaml.representer.RoundTripRepresenter):
+    """
+    Don't use YAML aliases and anchors, at all.
+    """
+
     def ignore_aliases(self, data):
         return True
+
+
+def ruamel_patch_reset_open_ended(self, *args, **kw):
+    """
+    Reset the open_ended flag after writing a plain value to prevent Ruamel from outputting document end markers.
+    """
+    self.write_plain_org(*args, **kw)
+    self.open_ended = False
 
 
 class YInterpreter:
@@ -72,8 +84,10 @@ class YInterpreter:
         self.context = YReference(self.root)
         self.functions = {}
         self.ruamelYaml = ruamel.yaml.YAML()
-        self.ruamelYaml.Representer = IgnoreAliases
+        self.ruamelYaml.Representer = RuamelPatchIgnoreAliases
         self.ruamelYaml.preserve_quotes = True
+        self.ruamelYaml.Emitter.write_plain_org = self.ruamelYaml.Emitter.write_plain
+        self.ruamelYaml.Emitter.write_plain = ruamel_patch_reset_open_ended
         self.ruamelYaml.indent(mapping=indent_mapping, sequence=indent_sequence, offset=indent_offset)
 
     def load(self, source):
@@ -94,17 +108,15 @@ class YInterpreter:
         self.root = root
         self.context = YReference(root)
 
-    def dump(self, destination):
+    def dump(self, value, destination):
         """
         Dump the root context as a YAML document to a stream.
 
+        :param value:
         :param destination:
         :return:
         """
-        # prevent ruamel.yaml.YAML.dump from outputting "null\n..."
-        if self.root is None:
-            return
-        self.ruamelYaml.dump(self.root, destination)
+        self.ruamelYaml.dump(value, destination)
 
     def interpret(self, expression):
         """
@@ -114,64 +126,70 @@ class YInterpreter:
         :return:
         """
         parsed_tree = parser.parse(expression)
-        return self._interpret_resolving(parsed_tree)
+        (result, read_write) = self._interpret_resolving(parsed_tree)
+        # after write actions an end-user would expect to see the document root with the changes applied
+        if read_write:
+            return self.root
+        return result
 
     def _interpret_resolving(self, value):
         """
         Interpret a parsed Y expression, resolving the result to a value.
 
         :param value:
-        :return:
+        :return: (result, read_write) where result is the value of the expression and read_write is a boolean indicating
+        whether the expression was interpreted as a read(False) or write(True) operation.
         """
-        result = self._interpret(value)
+        (result, read_write) = self._interpret(value)
         if isinstance(result, YReference):
-            return result.context
-        return result
+            return result.context, read_write
+        return result, read_write
 
     def _interpret(self, value):
         """
         Interpret a parsed Y expression.
 
         :param value: A Lark Tree object, representing a part of a Y expression.
-        :return:
+        :return: (result, read_write) where result is the value of the expression and read_write is a boolean indicating
+        whether the expression was interpreted as a read(False) or write(True) operation.
         """
         if value.data == 'math':
-            return self._interpret_math(value)
+            return self._interpret_math(value), False
         elif value.data == 'pipe':
-            return self._interpret_pipe(value)
+            return self._interpret_pipe(value), False
         elif value.data == 'reference_root':
-            return self._interpret_reference_root(value)
+            return self._interpret_reference_root(value), False
         elif value.data == 'reference_context':
-            return self._interpret_reference_context(value)
+            return self._interpret_reference_context(value), False
         elif value.data == 'subreference_by_key':
-            return self._interpret_subreference_by_key(value)
+            return self._interpret_subreference_by_key(value), False
         elif value.data == 'subreference_by_index':
-            return self._interpret_subreference_by_index(value)
+            return self._interpret_subreference_by_index(value), False
         elif value.data == 'subreference_array':
-            return self._interpret_subreference_array(value)
+            return self._interpret_subreference_array(value), False
         elif value.data == 'assignment':
-            return self._interpret_assignment(value)
+            return self._interpret_assignment(value), True
         elif value.data == 'call':
-            return self._interpret_call(value)
+            return self._interpret_call(value), False
         elif value.data == 'number':
-            return YInterpreter._interpret_number(value)
+            return YInterpreter._interpret_number(value), False
         elif value.data == 'string':
-            return YInterpreter._interpret_string(value)
+            return YInterpreter._interpret_string(value), False
         elif value.data == 'boolean_true':
-            return YInterpreter._interpret_boolean_true(value)
+            return YInterpreter._interpret_boolean_true(value), False
         elif value.data == 'boolean_false':
-            return YInterpreter._interpret_boolean_false(value)
+            return YInterpreter._interpret_boolean_false(value), False
         elif value.data == 'null':
-            return YInterpreter._interpret_null(value)
+            return YInterpreter._interpret_null(value), False
         else:
             raise Exception("unknown value: " + value.data)
 
     def _interpret_math(self, value):
         left = value.children[0]
-        left_value = self._interpret_resolving(left)
+        left_value, _ = self._interpret_resolving(left)
         operator = value.children[1]
         right = value.children[2]
-        right_value = self._interpret_resolving(right)
+        right_value, _ = self._interpret_resolving(right)
         if operator == '+':
             return left_value + right_value
         elif operator == '-':
@@ -191,7 +209,7 @@ class YInterpreter:
         original_context = self.context
         result = self.context
         for expression in value.children:
-            result = self._interpret(expression)
+            result, _ = self._interpret(expression)
             self.context = result
         self.context = original_context
         return result
@@ -248,10 +266,10 @@ class YInterpreter:
         return None
 
     def _interpret_assignment(self, value):
-        value_sink = self._interpret(value.children[0])
+        value_sink, _ = self._interpret(value.children[0])
         if not isinstance(value_sink, YReference):
             raise Exception("Can only assign values to a reference, instead got: " + str(value_sink))
-        value_source = self._interpret_resolving(value.children[1])
+        value_source, _ = self._interpret_resolving(value.children[1])
         value_sink.set(value_source)
         return value_source
 
@@ -277,7 +295,7 @@ if __name__ == '__main__':
     def test(expression, expected):
         parsed = parser.parse(expression)
         try:
-            result = yinterpreter._interpret_resolving(parsed)
+            result, _ = yinterpreter._interpret_resolving(parsed)
             if result != expected:
                 test_print('expected', expected)
                 test_print('result', result)

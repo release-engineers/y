@@ -71,14 +71,15 @@ def main():
                                 indent_sequence=indent_sequence,
                                 indent_offset=indent_offset)
     yinterpreter.load(file)
+    result = None
     for expression in expressions:
-        yinterpreter.interpret(expression)
+        result = yinterpreter.interpret(expression)
 
     if inplace:
         with open(file_reference, 'w') as file:
-            yinterpreter.dump(file)
+            yinterpreter.dump(result, file)
     else:
-        yinterpreter.dump(sys.stdout)
+        yinterpreter.dump(result, sys.stdout)
 
 
 if __name__ == '__main__':
