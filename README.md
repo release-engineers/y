@@ -1,5 +1,7 @@
 # y
 
+[![Status: Beta](https://img.shields.io/badge/status-beta-orange)](https://release-engineers.com/open-source-badges/)
+
 A tool like yq (and jq) but without their feature of completely cleaning up your YAML documents. yq and jq are great tools especially for making
 changes to documents that are not intended to be human-readable. However, when you want to make changes programmatically to documents and still be
 able to read them afterwards, they're probably not the best tools for the job.
