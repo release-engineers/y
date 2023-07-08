@@ -1,0 +1,21 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/release-engineers/build-image-poetry:latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        shell: bash
+        run: |
+          ./app.sh build

@@ -2,16 +2,21 @@
 name = "re-y"
 version = "1.0.1"
 description = ""
-authors = ["skphilipp <philipp@release-engineers.com>"]
-packages = [{include = "y"}]
+authors = ["Philipp Gayret <philipp@release-engineers.com>"]
+readme = "README.md"
+packages = [{ include = "y" }]
+license = "SSPL-1.0"
+
+[tool.poetry.scripts]
+"y" = "y.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 "ruamel.yaml" = "0.17.21"
 lark = "1.1.5"
 
-[tool.poetry.scripts]
-y = "y.__main__:main"
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.2"
 
 [build-system]
 requires = ["poetry-core"]
