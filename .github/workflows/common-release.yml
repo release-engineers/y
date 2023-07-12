@@ -25,6 +25,11 @@ jobs:
           git config --local user.email 'github-actions[bot]@users.noreply.github.com'
           build-system build
           build-system test
+      - shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
           build-system release
   templating:
     runs-on: ubuntu-latest
