@@ -23,6 +23,7 @@ jobs:
           git config --global --add safe.directory '*'
           git config --local user.name 'github-actions[bot]'
           git config --local user.email 'github-actions[bot]@users.noreply.github.com'
+          build-system increment
           build-system build
           build-system test
       - shell: bash
