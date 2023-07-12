@@ -1,4 +1,4 @@
-FROM alpine:3.18.0 as staging
+FROM alpine:3.18.2 as staging
 
 RUN apk add --no-cache unzip
 
