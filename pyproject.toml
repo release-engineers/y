@@ -12,7 +12,7 @@ license = "SSPL-1.0"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-"ruamel.yaml" = "0.17.21"
+"ruamel.yaml" = "0.17.32"
 lark = "1.1.5"
 
 [tool.poetry.group.dev.dependencies]
