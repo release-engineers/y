@@ -1,0 +1,25 @@
+name: Build
+
+on:
+  push:
+    branches-ignore:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    container: ghcr.io/release-engineers/build-image-poetry:latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: release-engineers/build-system@v0
+      - shell: bash
+        run: |
+          git config --global --add safe.directory '*'
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
+          build-system build
+          build-system test

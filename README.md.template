@@ -92,8 +92,6 @@ Development requires:
 - [Python](https://www.python.org/)
 - [Poetry](https://python-poetry.org/)
 
-See [`app.sh`](./app.sh) for building, running and releasing the application.
-
 ## Links
 
 This project was created using [template-poetry](https://github.com/release-engineers/template-poetry).
