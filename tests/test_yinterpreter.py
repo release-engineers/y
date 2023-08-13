@@ -5,7 +5,7 @@ from y.yinterpreter import YInterpreter, parser
 
 def test_cli():
     yinterpreter = YInterpreter()
-    yinterpreter.load('docs/sample.yml')
+    yinterpreter.load('tests/sample.yml')
 
     def test_print(name, value):
         print(f"-- {name}")

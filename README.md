@@ -40,30 +40,30 @@ a:
 ```bash
 #!/usr/bin/env bash
 # modify a file in-place
-y --inplace --file docs/sample.yml -- '.a.b.c[0] = 123'
+y --inplace --file tests/sample.yml -- '.a.b.c[0] = 123'
 ```
 
 ```bash
 #!/usr/bin/env bash
 # write to stdout
-y --file docs/sample.yml -- '.a.b.c[0] = 123'
+y --file tests/sample.yml -- '.a.b.c[0] = 123'
 ```
 
 ### Expressions
 
-| Selectors | Description                                  | Example                                |
-|-----------|----------------------------------------------|----------------------------------------|
-| `.`       | Select the root of the expression context    | `y --file docs/sample.yml '.'`         |
-| `.key`    | Select field `key` within the context        | `y --file docs/sample.yml '.a.b.c'`    |
-| `[index]` | Select element at `index` within the context | `y --file docs/sample.yml '.a.b.c[0]'` |
-| `$`       | Select the root of the program context.      | `y --file docs/sample.yml '$'`         |
+| Selectors | Description                                  | Example                                 |
+|-----------|----------------------------------------------|-----------------------------------------|
+| `.`       | Select the root of the expression context    | `y --file tests/sample.yml '.'`         |
+| `.key`    | Select field `key` within the context        | `y --file tests/sample.yml '.a.b.c'`    |
+| `[index]` | Select element at `index` within the context | `y --file tests/sample.yml '.a.b.c[0]'` |
+| `$`       | Select the root of the program context.      | `y --file tests/sample.yml '$'`         |
 
-| Operators                                 | Description                                                                                          | Example                                |
-|-------------------------------------------|------------------------------------------------------------------------------------------------------|----------------------------------------|
-| `expression = expression`                 | Assign a value a given reference                                                                     | `y --file docs/sample.yml '.a = .a.b'` |
-| `expression + expression`                 | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                                               | `y '.1 + 2 * 4'`                       |
-| <code>expression &#124; expression</code> | Pipe operator; pass the output of the left-hand expression as context for the right-hand expression. | <code>y '2 &#124; . * 2'</code>        |
-| `(expression)`                            | Precedence operator; evaluate the expression within parentheses first.                               | <code>y '(2 &#124; . * 2)'</code>      |
+| Operators                                 | Description                                                                                          | Example                                 |
+|-------------------------------------------|------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| `expression = expression`                 | Assign a value a given reference                                                                     | `y --file tests/sample.yml '.a = .a.b'` |
+| `expression + expression`                 | Mathematical operators `+`, `-`, `/`, `*`, `%` and `^`                                               | `y '.1 + 2 * 4'`                        |
+| <code>expression &#124; expression</code> | Pipe operator; pass the output of the left-hand expression as context for the right-hand expression. | <code>y '2 &#124; . * 2'</code>         |
+| `(expression)`                            | Precedence operator; evaluate the expression within parentheses first.                               | <code>y '(2 &#124; . * 2)'</code>       |
 
 :information_source: Regarding mathematical operators; `^` is evaluated first, then `*`, `/` and `%` are evaluated left-to-right, and finally `+`
 and `-` are evaluated left-to-right.
