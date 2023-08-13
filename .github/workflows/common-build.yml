@@ -17,5 +17,6 @@ jobs:
       - uses: crazy-max/ghaction-github-runtime@056b8ec6661ce03a987ab8643a0edc346ae63fe3
       - shell: bash
         run: |
+          docker buildx create --use --driver=docker-container
           docker buildx build --cache-to type=gha,mode=max --cache-from type=gha --target test .
           docker buildx build --cache-to type=gha,mode=max --cache-from type=gha --target release_docker .
