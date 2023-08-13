@@ -15,6 +15,7 @@ jobs:
     container: ghcr.io/release-engineers/build-image-poetry:latest
     steps:
       - uses: actions/checkout@v3
+      - uses: docker/setup-buildx-action@v2
       - shell: bash
         run: |
           docker build --target test .
