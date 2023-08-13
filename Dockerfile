@@ -19,7 +19,7 @@ COPY poetry.lock poetry.toml pyproject.toml /app/
 RUN mkdir -p /app/y \
     && touch /app/y/__init__.py \
     && touch /app/README.md
-RUN poetry install --no-dev
+RUN poetry install --only main
 # poetry build
 COPY y /app/y
 COPY README.md /app/
