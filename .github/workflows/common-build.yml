@@ -14,6 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            fs.appendFileSync(
+              process.env.GITHUB_OUTPUT,
+              `ACTIONS_CACHE_URL=${process.env.ACTIONS_CACHE_URL}\nACTIONS_RUNTIME_TOKEN=${process.env.ACTIONS_RUNTIME_TOKEN}\n`
+            );
       - shell: bash
         run: |
           docker buildx build --cache-to type=gha,mode=max --cache-from type=gha --target test .
