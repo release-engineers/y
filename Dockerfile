@@ -10,24 +10,24 @@
 #
 FROM python:3.11-slim as build
 
+# install build tool
 RUN pip install --no-cache-dir poetry
 WORKDIR /app
 
-# poetry install
-# (with assorted files required for it to succeed)
+# install dependencies
+# (with assorted files for it to succeed)
 COPY poetry.lock poetry.toml pyproject.toml /app/
 RUN mkdir -p /app/y \
     && touch /app/y/__init__.py \
     && touch /app/README.md
 RUN poetry install --only main
-# poetry build
+# build artifact
 COPY y /app/y
 COPY README.md /app/
 RUN poetry build --format wheel
 
 FROM build as test
 
-COPY --from=build /app/ /app/
 COPY tests /app/tests
 RUN poetry install
 RUN poetry run pytest
