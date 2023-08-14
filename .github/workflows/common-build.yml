@@ -14,9 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: crazy-max/ghaction-github-runtime@056b8ec6661ce03a987ab8643a0edc346ae63fe3
+        with:
+          path: repo
+      - id: cache-docker
+        uses: actions/cache@v3
+        with:
+          path: docker-cache
+          key: ${{ runner.os }}-docker
+          restore-keys: |
+            ${{ runner.os }}-docker
       - shell: bash
         run: |
+          CACHE_DIR="${PWD}/docker-cache"
+          CACHE_OPTS="--cache-from=type=local,src=${CACHE_DIR} --cache-to=type=local,dest=${CACHE_DIR}"
           docker buildx create --use --driver=docker-container
-          docker buildx build --cache-to type=gha,mode=max --cache-from type=gha --target test .
-          docker buildx build --cache-to type=gha,mode=max --cache-from type=gha --target release_docker .
+          docker buildx build ${CACHE_OPTS} --target test .
+          docker buildx build ${CACHE_OPTS} --target release_docker .

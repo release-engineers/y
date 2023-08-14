@@ -23,7 +23,6 @@ RUN mkdir -p /app/y \
 RUN poetry install --only main
 # build artifact
 COPY y /app/y
-COPY README.md /app/
 RUN poetry build --format wheel
 
 FROM build as test
