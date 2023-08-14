@@ -29,6 +29,5 @@ jobs:
           CACHE_OPTS="--cache-from=type=local,src=${CACHE_DIR} --cache-to=type=local,dest=${CACHE_DIR}"
           cd repo
           docker buildx create --use --driver=docker-container
-          docker buildx build ${CACHE_OPTS} --target build .
           docker buildx build ${CACHE_OPTS} --target test .
           docker buildx build ${CACHE_OPTS} --target release_docker .
