@@ -20,9 +20,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: docker-cache
-          key: ${{ runner.os }}-docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('repo/Dockerfile') }}-${{ github.ref_name }}
           restore-keys: |
-            ${{ runner.os }}-docker
+            ${{ runner.os }}-docker-${{ hashFiles('repo/Dockerfile') }}-${{ github.ref_name }}
+            ${{ runner.os }}-docker-${{ hashFiles('repo/Dockerfile') }}-
+            ${{ runner.os }}-docker-
       - shell: bash
         run: |
           CACHE_DIR="${PWD}/docker-cache"
