@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "re-y"
-version = "2.1.7"
+version = "0.0.0"
 description = ""
 authors = ["Philipp Gayret <philipp@release-engineers.com>"]
 readme = "README.md"
